@@ -4,8 +4,8 @@ namespace Mpociot\Teamwork\Tests\Feature;
 
 use Event;
 use Mpociot\Teamwork\TeamworkTeam;
+use Mpociot\Teamwork\Tests\Support\User;
 use Mpociot\Teamwork\Tests\TestCase;
-use Mpociot\Teamwork\Tests\User;
 
 class UserHasTeamsTraitTest extends TestCase
 {
@@ -314,5 +314,30 @@ class UserHasTeamsTraitTest extends TestCase
 
         $this->expectException('Illuminate\Database\Eloquent\ModelNotFoundException');
         $this->user->switchTeam(3);
+    }
+
+    public function testTeamForOwnerCanBeCreatedAndSwitchToTeamIfNoTeamExists()
+    {
+        $team = $this->user->createOwnedTeam(['name' => 'test']);
+
+        $this->assertTrue($this->user->isOwnerOfTeam($team));
+        $this->assertTrue($team->hasUser($this->user));
+        $this->assertEquals($this->user->currentTeam->id, $team->id);
+    }
+
+    public function testTeamForOwnerCanBeCreatedAndNotSwitchToTeamIfTeamExists()
+    {
+        $firstTeam = $this->user->createOwnedTeam(['name' => 'test']);
+        $anotherTeam = $this->user->createOwnedTeam(['name' => 'Another test']);
+
+        $this->assertEquals($this->user->currentTeam->id, $firstTeam->id);
+    }
+
+    public function testTeamForOwnerCanBeCreatedAndCanSwitchToNewTeam()
+    {
+        $firstTeam = $this->user->createOwnedTeam(['name' => 'test']);
+        $anotherTeam = $this->user->createOwnedTeam(['name' => 'Another test'], true);
+
+        $this->assertEquals($this->user->currentTeam->id, $anotherTeam->id);
     }
 }
